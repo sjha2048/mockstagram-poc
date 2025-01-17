@@ -37,3 +37,12 @@ Benefits:
 - No need to scan historical data
 - Single atomic database operation
 
+### 3. Tech Stack used
+
+#### Redis Streams 
+
+Redis Streams is used as the queueing mechanism to distribute follower count data between workers and processors. Workers publish fetched data to a Redis stream, and processors consume it using consumer groups for further processing and storage.
+
+#### TimescaleDB
+
+TimescaleDB is used to store time-series data of influencer follower counts. It handles both the raw data points for historical tracking and the computed metrics like running averages, enabling efficient querying and aggregation.
