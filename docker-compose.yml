@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mockstagram
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  worker1:
+    build:
+      context: ./worker
+    environment:
+      - WORKER_ID=1
+      - REDIS_URL=redis://redis:6379
+      - MOCKSTAGRAM_URL=http://host.docker.internal:3000
+    depends_on:
+      - redis
+
+  worker2:
+    build:
+      context: ./worker
+    environment:
+      - WORKER_ID=2
+      - REDIS_URL=redis://redis:6379
+      - MOCKSTAGRAM_URL=http://host.docker.internal:3000
+    depends_on:
+      - redis
+
+  processor1:
+    build:
+      context: ./processor
+    environment:
+      - PROCESSOR_ID=1
+      - REDIS_URL=redis://redis:6379
+      - DB_URL=postgresql://postgres:password@postgres:5432/mockstagram
+    depends_on:
+      - postgres
+      - redis
+
+  processor2:
+    build:
+      context: ./processor
+    environment:
+      - PROCESSOR_ID=2
+      - REDIS_URL=redis://redis:6379
+      - DB_URL=postgresql://postgres:password@postgres:5432/mockstagram
+    depends_on:
+      - postgres
+      - redis
+
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_URL=postgresql://postgres:password@postgres:5432/mockstagram
+    depends_on:
+      - postgres
